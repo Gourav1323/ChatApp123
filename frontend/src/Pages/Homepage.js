@@ -25,7 +25,7 @@ function Homepage() {
   return (
     <Container maxW="xl" centerContent>
       <Box
-        d="flex" // Corrected typo
+        display="flex" // Corrected typo
         justifyContent="center"
         p={3}
         bg="white"
