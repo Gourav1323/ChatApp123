@@ -2,59 +2,9 @@ const expressAsyncHandler = require("express-async-handler");
 const User = require("../models/User");
 const generateToken = require("../config/generateToken");
 
-// User Registration
-const registerUser = expressAsyncHandler(async (req, res) => {
-  const { name, email, password, pic } = req.body;
-
-  if (!name || !email || !password) {
-    res.status(400);
-    throw new Error("Please Enter all the fields");
-  }
-
-  const userExist = await User.findOne({ email });
-
-  if (userExist) {
-    res.status(400);
-    throw new Error("User Already Exists");
-  }
-
-  const user = await User.create({ name, email, password, pic });
-
-  if (user) {
-    res.status(201).json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      pic: user.pic,
-      token: generateToken(user._id),
-    });
-  } else {
-    res.status(400);
-    throw new Error("Failed to create user");
-  }
-});
-
-// User Authentication
-const authUser = expressAsyncHandler(async (req, res) => {
-  const { email, password } = req.body;
-
-  const user = await User.findOne({ email });
-
-  if (user && (await user.matchPassword(password))) {
-    res.json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      pic: user.pic,
-      token: generateToken(user._id),
-    });
-  } else {
-    res.status(401);
-    throw new Error("Invalid Email or Password");
-  }
-});
-
-// Get All Users
+//@description     Get or Search all users
+//@route           GET /api/user?search=
+//@access          Public
 const allUsers = expressAsyncHandler(async (req, res) => {
   const keyword = req.query.search
     ? {
@@ -69,4 +19,67 @@ const allUsers = expressAsyncHandler(async (req, res) => {
   res.send(users);
 });
 
-module.exports = { registerUser, authUser, allUsers };
+//@description     Register new user
+//@route           POST /api/user/
+//@access          Public
+const registerUser = expressAsyncHandler(async (req, res) => {
+  const { name, email, password, pic } = req.body;
+
+  if (!name || !email || !password) {
+    res.status(400);
+    throw new Error("Please Enter all the Feilds");
+  }
+
+  const userExists = await User.findOne({ email });
+
+  if (userExists) {
+    res.status(400);
+    throw new Error("User already exists");
+  }
+
+  const user = await User.create({
+    name,
+    email,
+    password,
+    pic,
+  });
+
+  if (user) {
+    res.status(201).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      isAdmin: user.isAdmin,
+      pic: user.pic,
+      token: generateToken(user._id),
+    });
+  } else {
+    res.status(400);
+    throw new Error("User not found");
+  }
+});
+
+//@description     Auth the user
+//@route           POST /api/users/login
+//@access          Public
+const authUser = expressAsyncHandler(async (req, res) => {
+  const { email, password } = req.body;
+
+  const user = await User.findOne({ email });
+
+  if (user && (await user.matchPassword(password))) {
+    res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      isAdmin: user.isAdmin,
+      pic: user.pic,
+      token: generateToken(user._id),
+    });
+  } else {
+    res.status(401);
+    throw new Error("Invalid Email or Password");
+  }
+});
+
+module.exports = { allUsers, registerUser, authUser };

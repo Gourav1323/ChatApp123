@@ -11,7 +11,7 @@ const accessChat = expressAsyncHandler(async (req, res) => {
     return res.sendStatus(400);
   }
 
-  let isChat = await Chat.find({
+  var isChat = await Chat.find({
     isGroupChat: false,
     $and: [
       { users: { $elemMatch: { $eq: req.user._id } } },
@@ -29,7 +29,7 @@ const accessChat = expressAsyncHandler(async (req, res) => {
   if (isChat.length > 0) {
     res.send(isChat[0]);
   } else {
-    const chatData = {
+    var chatData = {
       chatName: "sender",
       isGroupChat: false,
       users: [req.user._id, userId],
@@ -37,9 +37,11 @@ const accessChat = expressAsyncHandler(async (req, res) => {
 
     try {
       const createdChat = await Chat.create(chatData);
-      const fullChat = await Chat.findOne({ _id: createdChat._id })
-        .populate("users", "-password");
-      res.status(200).json(fullChat);
+      const FullChat = await Chat.findOne({ _id: createdChat._id }).populate(
+        "users",
+        "-password"
+      );
+      res.status(200).json(FullChat);
     } catch (error) {
       res.status(400);
       throw new Error(error.message);
@@ -50,18 +52,18 @@ const accessChat = expressAsyncHandler(async (req, res) => {
 // Fetch Chats
 const fetchChats = expressAsyncHandler(async (req, res) => {
   try {
-    const results = await Chat.find({ users: { $elemMatch: { $eq: req.user._id } } })
+    Chat.find({ users: { $elemMatch: { $eq: req.user._id } } })
       .populate("users", "-password")
       .populate("groupAdmin", "-password")
       .populate("latestMessage")
-      .sort({ updatedAt: -1 });
-
-    const populatedResults = await User.populate(results, {
-      path: "latestMessage.sender",
-      select: "name pic email",
-    });
-
-    res.status(200).send(populatedResults);
+      .sort({ updatedAt: -1 })
+      .then(async (results) => {
+        results = await User.populate(results, {
+          path: "latestMessage.sender",
+          select: "name pic email",
+        });
+        res.status(200).send(results);
+      });
   } catch (error) {
     res.status(400);
     throw new Error(error.message);
@@ -107,8 +109,12 @@ const renameGroup = expressAsyncHandler(async (req, res) => {
 
   const updatedChat = await Chat.findByIdAndUpdate(
     chatId,
-    { chatName },
-    { new: true }
+    {
+      chatName: chatName,
+    },
+    {
+      new: true,
+    }
   )
     .populate("users", "-password")
     .populate("groupAdmin", "-password");
@@ -125,10 +131,16 @@ const renameGroup = expressAsyncHandler(async (req, res) => {
 const addGp = expressAsyncHandler(async (req, res) => {
   const { chatId, userId } = req.body;
 
+  // check if the requester is admin
+
   const added = await Chat.findByIdAndUpdate(
     chatId,
-    { $push: { users: userId } },
-    { new: true }
+    {
+      $push: { users: userId },
+    },
+    {
+      new: true,
+    }
   )
     .populate("users", "-password")
     .populate("groupAdmin", "-password");
@@ -145,10 +157,16 @@ const addGp = expressAsyncHandler(async (req, res) => {
 const removeFromGp = expressAsyncHandler(async (req, res) => {
   const { chatId, userId } = req.body;
 
+  // check if the requester is admin
+
   const removed = await Chat.findByIdAndUpdate(
     chatId,
-    { $pull: { users: userId } },
-    { new: true }
+    {
+      $pull: { users: userId },
+    },
+    {
+      new: true,
+    }
   )
     .populate("users", "-password")
     .populate("groupAdmin", "-password");
