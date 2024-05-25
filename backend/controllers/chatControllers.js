@@ -11,7 +11,7 @@ const accessChat = expressAsyncHandler(async (req, res) => {
     return res.sendStatus(400);
   }
 
-  var isChat = await Chat.find({
+  let isChat = await Chat.find({
     isGroupChat: false,
     $and: [
       { users: { $elemMatch: { $eq: req.user._id } } },
@@ -29,7 +29,7 @@ const accessChat = expressAsyncHandler(async (req, res) => {
   if (isChat.length > 0) {
     res.send(isChat[0]);
   } else {
-    var chatData = {
+    let chatData = {
       chatName: "sender",
       isGroupChat: false,
       users: [req.user._id, userId],

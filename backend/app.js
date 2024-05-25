@@ -12,12 +12,23 @@ data(); // Initialize your database connection
 const app = express();
 app.use(express.json()); // Middleware to parse JSON bodies
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3300;
 
-// Basic route for testing
-app.get("/", (req, res) => {
-  res.send("Server is working...");
-});
+// // Basic route for testing
+const __dirname1 = path.resolve();
+
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname1, "/frontend/build")));
+
+  app.get("*", (req, res) =>
+    res.sendFile(path.resolve(__dirname1, "frontend", "build", "index.html"))
+  );
+} else {
+  app.get("/", (req, res) => {
+    res.send("server is running..");
+  });
+}
+
 
 // API routes
 app.use("/api/user", userRoutes);
